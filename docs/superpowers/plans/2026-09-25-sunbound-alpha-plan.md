@@ -2230,6 +2230,8 @@ git push origin main
 
 ## Phase 5: Character Rig at 12 fps (1.5 h)
 
+> **Executed 2026-09-25.** Deviation: `ensureSoraTextures` clips each frame to its 48x64 cell before drawing (block below updated); without it, shoes and wheels drawn ~1 px under the feet line bled into the frame below and showed as a stray board above the sitting pose. `qa/phase5.mjs` resets idle time with a Shift tap first, because the game keeps running (and idling) while the headless page finishes loading. Verified frame timing: walk, run, push, ollie 83.3 ms (12 fps); idle, look, roll 166.7 ms (6 fps); sit 250 ms (4 fps); look-around at 4 s and sitting at 10 s of idleness.
+
 **Deliverable:** A code-generated 48×64 sprite sheet for Sora with the exact animation grid from the art contract, animations registered at 12/6/4 fps, animation chosen from player state by a pure function, backpack and hair lagging 2 and 1 frames behind the body, landing squash and air stretch, idle look-around at 4 s and sit at 10 s. Painters can replace `sora`, `sora-pack`, `sora-hair` by dropping PNGs with those keys into the art manifest.
 
 **Files:**
@@ -2541,6 +2543,11 @@ export function ensureSoraTextures(scene: Phaser.Scene): void {
         const idx = frameIndexOf(anim, i);
         const { x, y } = frameRect(idx);
         ctx.save();
+        // Clip to this cell: shoes and wheels reach ~1 px below the feet line and would
+        // otherwise bleed into the top of the frame underneath (seen floating above the sit pose).
+        ctx.beginPath();
+        ctx.rect(x, y, FRAME_W, FRAME_H);
+        ctx.clip();
         ctx.translate(x + FRAME_W / 2, y + FRAME_H);
         drawFigure(ctx, poseFor(anim, i, frames));
         ctx.restore();
