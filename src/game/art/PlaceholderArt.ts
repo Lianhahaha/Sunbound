@@ -92,3 +92,15 @@ export function ensureStagePlaceholders(scene: Phaser.Scene, def: StageDef): voi
   ensureHills(scene, `${def.id}-mid`, P[c.mid], P[c.midRim], 680, 140, 4.1);
   ensureFoliage(scene, `${def.id}-fg`, P[c.fg], 9);
 }
+
+export function ensureDust(scene: Phaser.Scene): void {
+  const tex = canvasFor(scene, 'dust', 16, 16);
+  if (!tex) return;
+  const ctx = tex.context;
+  const g = ctx.createRadialGradient(8, 8, 1, 8, 8, 8);
+  g.addColorStop(0, 'rgba(255,255,255,0.9)');
+  g.addColorStop(1, 'rgba(255,255,255,0)');
+  ctx.fillStyle = g;
+  ctx.fillRect(0, 0, 16, 16);
+  tex.refresh();
+}

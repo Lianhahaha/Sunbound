@@ -1,6 +1,9 @@
 import { heightAt, type Terrain } from './terrain';
+import { stepSkate, type SkateParams } from './skate';
 import type { Env, Mode, PlayerInput, PlayerState } from './types';
-import { stepWalk } from './walk';
+import { stepWalk, type WalkParams } from './walk';
+
+export interface PlayerParams { skate?: SkateParams; walk?: WalkParams }
 
 export function createPlayer(x: number, terrain: Terrain, mode: Mode = 'walk'): PlayerState {
   return {
@@ -11,8 +14,21 @@ export function createPlayer(x: number, terrain: Terrain, mode: Mode = 'walk'): 
   };
 }
 
-export function stepPlayer(s: PlayerState, input: PlayerInput, dt: number, terrain: Terrain, _env: Env): PlayerState {
-  const n = stepWalk(s, input, dt, terrain);
+export function stepPlayer(s: PlayerState, input: PlayerInput, dt: number, terrain: Terrain, env: Env, params: PlayerParams = {}): PlayerState {
+  let n = s;
+  if (input.togglePressed && s.grounded && s.fallTimer === 0) {
+    n = { ...s, mode: s.mode === 'walk' ? 'skate' : 'walk' };
+    if (n.mode === 'skate') {
+      n.speed = s.vx;
+      n.running = false;
+    } else {
+      n.speed = 0;
+      n.vx = 0;
+      n.tucking = false;
+    }
+  }
+  n = n.mode === 'skate' ? stepSkate(n, input, dt, terrain, env, params.skate) : stepWalk(n, input, dt, terrain, params.walk);
+  if (n.mode === 'skate') n.stamina = Math.min(100, n.stamina + 6 * dt);
   n.idleTime = input.any ? 0 : n.idleTime + dt;
   return n;
 }

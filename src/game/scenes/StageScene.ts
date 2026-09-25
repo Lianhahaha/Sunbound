@@ -2,7 +2,9 @@ import Phaser from 'phaser';
 import { GAME_HEIGHT, GAME_WIDTH } from '../../shared/constants';
 import { DEFAULT_CAM, snapCamera, stepCamera, type CamState } from '../core/camera';
 import { createTerrain, terrainBounds, type Terrain } from '../core/terrain';
+import type { SkateParams } from '../core/skate';
 import type { Env } from '../core/types';
+import type { WalkParams } from '../core/walk';
 import { P, hexString } from '../palette';
 import { STAGES } from '../stages';
 import type { LayerDef, StageDef } from '../stages/types';
@@ -88,6 +90,12 @@ export class StageScene extends Phaser.Scene {
           };
         },
         player: () => this.player.sim,
+        /** Live feel tuning, e.g. __dbg.tune({ skate: { rollFriction: 0.3 } }). */
+        tune: (partial: { skate?: Partial<SkateParams>; walk?: Partial<WalkParams> }) => {
+          Object.assign(this.player.params.skate, partial.skate ?? {});
+          Object.assign(this.player.params.walk, partial.walk ?? {});
+          return this.player.params;
+        },
         scene: () => this,
       };
     }
@@ -101,7 +109,7 @@ export class StageScene extends Phaser.Scene {
     this.cam = stepCamera(this.cam, { x: s.x, y: s.y, vx: s.vx, facing: s.facing }, dt, DEFAULT_CAM);
     this.applyCamera();
     this.debugText.setText(
-      `${this.def.name}   ${s.mode}  x ${s.x.toFixed(0)}  spd ${s.speed.toFixed(0)}  sta ${s.stamina.toFixed(0)}${s.tired ? ' tired' : ''}   fps ${this.game.loop.actualFps.toFixed(0)}`,
+      `${this.def.name}   ${s.mode}${s.tucking ? ' tuck' : ''}${s.grounded ? '' : ' air'}${s.fallTimer > 0 ? ' fall' : ''}  x ${s.x.toFixed(0)}  spd ${s.speed.toFixed(0)}  sta ${s.stamina.toFixed(0)}${s.tired ? ' tired' : ''}   fps ${this.game.loop.actualFps.toFixed(0)}`,
     );
   }
 
