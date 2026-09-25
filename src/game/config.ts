@@ -2,6 +2,7 @@ import Phaser from 'phaser';
 import { GAME_HEIGHT, GAME_WIDTH } from '../shared/constants';
 import { S, hexString } from './palette';
 import { BootScene } from './scenes/BootScene';
+import { StageScene } from './scenes/StageScene';
 
 export function createGame(parent: string): Phaser.Game {
   return new Phaser.Game({
@@ -15,6 +16,6 @@ export function createGame(parent: string): Phaser.Game {
     input: { gamepad: true },
     fps: { target: 60, min: 30 },
     scale: { mode: Phaser.Scale.FIT, autoCenter: Phaser.Scale.CENTER_BOTH },
-    scene: [BootScene],
+    scene: [BootScene, StageScene],
   });
 }

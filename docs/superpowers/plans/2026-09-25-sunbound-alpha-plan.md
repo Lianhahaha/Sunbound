@@ -723,6 +723,8 @@ git push origin main
 
 ## Phase 2: Stage Framework, Terrain, Parallax, Camera (2 h)
 
+> **Executed 2026-09-25.** Deviations, already folded into the code below: `StageScene.update` carries `override` (`noImplicitOverride` rejects it otherwise); foreground foliage is drawn at texture y 210–330 instead of 20–140 so it shows at the top of the screen; hill rim strokes run 8 px past both tile edges to hide the seam at x 1024. Added `qa/phase2-shots.mjs` (spawn and mid-descent screenshots). Headless Chrome reports 120 fps because Phaser follows the display refresh rate; all movement is delta-time based, so speed is unaffected.
+
 **Deliverable:** A `StageScene` that loads a `StageDef`, generates tiling placeholder layers (sky, far hills, mid hills, foreground foliage), draws the ground from a terrain polyline with stair steps on stone segments, and follows a temporary "probe" dot moved with the arrow keys using the smoothed look-ahead camera. `window.__dbg.summary()` reports stage, position, and fps.
 
 **Files:**
@@ -1168,8 +1170,8 @@ export function ensureHills(scene: Phaser.Scene, key: string, fill: number, rim:
   ctx.lineWidth = 6;
   ctx.strokeStyle = hexString(rim);
   ctx.beginPath();
-  for (let x = 0; x <= w; x += 4) {
-    if (x === 0) ctx.moveTo(x, yAt(x));
+  for (let x = -8; x <= w + 8; x += 4) {
+    if (x === -8) ctx.moveTo(x, yAt(x));
     else ctx.lineTo(x, yAt(x));
   }
   ctx.stroke();
@@ -1185,7 +1187,7 @@ export function ensureFoliage(scene: Phaser.Scene, key: string, color: number, s
   ctx.fillStyle = hexString(color);
   for (let i = 0; i < 14; i++) {
     const cx = (i / 14) * LAYER_W + rnd() * 40;
-    const cy = 20 + rnd() * 120;
+    const cy = 210 + rnd() * 120;
     const r = 30 + rnd() * 40;
     for (const dx of [-LAYER_W, 0, LAYER_W]) {
       ctx.beginPath();
@@ -1348,7 +1350,7 @@ export class StageScene extends Phaser.Scene {
     }
   }
 
-  update(_time: number, deltaMs: number): void {
+  override update(_time: number, deltaMs: number): void {
     const dt = Math.min(deltaMs / 1000, 1 / 30);
     const dir = (this.cursors.right.isDown ? 1 : 0) - (this.cursors.left.isDown ? 1 : 0);
     this.probe.vx = dir * 300;
