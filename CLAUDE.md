@@ -18,7 +18,7 @@ Update this checklist at the end of every phase, right after the phase's commit.
 - [x] Phase 1 — Design tokens and art direction (1.5 h) — `140253c` (2026-09-25)
 - [x] Phase 2 — Stage framework, terrain, parallax, camera (2 h) — `9cbbaf0` (2026-09-25)
 - [x] Phase 3 — Walk and run with stamina (1.5 h) — `a5c2b30` (2026-09-25)
-- [ ] Phase 4 — Skateboard momentum (2 h)
+- [x] Phase 4 — Skateboard momentum (2 h) — `ce8c493` (2026-09-25; skate feel numbers still await the owner's play-test)
 - [ ] Phase 5 — Character rig at 12 fps (1.5 h)
 - [ ] Phase 6 — Wind, time of day, atmosphere (2 h)
 - [ ] Phase 7 — React overlay and dialogue (2 h)
@@ -30,7 +30,7 @@ Update this checklist at the end of every phase, right after the phase's commit.
 - [ ] Phase 13 — Touch, PWA, reduced motion, performance (1.5 h)
 - [ ] Phase 14 — Title, feedback, tester build (1 h)
 
-**Current phase:** 4. (`/impeccable init` is done: `PRODUCT.md` was written on 2026-09-25 from the owner's messages and the GDD without a live interview. Items marked *(inferred)* there still need the owner's confirmation; rerun `/impeccable init` in a session opened in this folder to review them.)
+**Current phase:** 5. (`/impeccable init` is done: `PRODUCT.md` was written on 2026-09-25 from the owner's messages and the GDD without a live interview. Items marked *(inferred)* there still need the owner's confirmation; rerun `/impeccable init` in a session opened in this folder to review them.)
 
 **Deferred tasks** (append here anything a phase could not finish inside its time box, with the phase number):
 
