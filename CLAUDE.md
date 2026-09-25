@@ -14,7 +14,7 @@ Do not re-plan, re-architect, or "improve" the plan before executing it. If a st
 
 Update this checklist at the end of every phase, right after the phase's commit. Tick the box and write the commit hash.
 
-- [ ] Phase 0 — Scaffold and dev loop (1 h)
+- [x] Phase 0 — Scaffold and dev loop (1 h) — `c29fa4d` (2026-09-25)
 - [ ] Phase 1 — Design tokens and art direction (1.5 h)
 - [ ] Phase 2 — Stage framework, terrain, parallax, camera (2 h)
 - [ ] Phase 3 — Walk and run with stamina (1.5 h)
@@ -30,7 +30,7 @@ Update this checklist at the end of every phase, right after the phase's commit.
 - [ ] Phase 13 — Touch, PWA, reduced motion, performance (1.5 h)
 - [ ] Phase 14 — Title, feedback, tester build (1 h)
 
-**Current phase:** 0 (repository not yet initialised; Phase 0 Step 1 is `git init`).
+**Current phase:** 1. Before starting it, run `/impeccable init` once (see Design skills below).
 
 **Deferred tasks** (append here anything a phase could not finish inside its time box, with the phase number):
 
@@ -52,8 +52,13 @@ Update this checklist at the end of every phase, right after the phase's commit.
 5. Tick the phase above with the commit hash, commit that change, and push again.
 
 Skill paths on this machine (used by the recipe):
-- `C:\Users\My PC\.claude\skills\game-development\game.mjs` — `run`, `logs --errors`, `shot`, `stop` (manifest: `.codegpt-game.json`, created in Phase 0).
+- `C:\Users\My PC\.claude\skills\game-development\game.mjs` — `run`, `run --restart`, `logs --errors`, `shot`, `stop` (manifest: `.codegpt-game.json`).
 - `C:\Users\My PC\.claude\skills\browser-automation\browser.mjs` — `--wait canvas`, `--eval`, `--script qa/phaseN.mjs`, `--screenshot shots/phase-N.png`.
+
+Local facts learned in Phase 0:
+- The game's dev server runs on **port 5180**. Port 5173 belongs to another project's Vite server on this machine; do not stop it.
+- The browser driver (patchright) runs `--eval` and `page.evaluate(fn)` in an isolated world: DOM is visible, page globals are not. Read `window.__game` / `window.__dbg` with `page.evaluate(fn, arg, false)` in `qa/*.mjs`, or from bash with `DBG_EXPR="window.__dbg.summary()" node ".../browser.mjs" http://localhost:5180/ --script ./qa/dbg.mjs`.
+- First page load after installing dependencies takes about 30 s while Vite pre-bundles Phaser; later loads are fast.
 
 ## Hard rules (from the plan's Global Constraints)
 
