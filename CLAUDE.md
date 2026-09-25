@@ -68,7 +68,14 @@ Skill paths on this machine (used by the recipe):
 
 ## Design skills
 
-Apply the design checkpoints written into Phases 1, 7, 9 and 13 (they come from the `ui-ux-pro-max` priority table and the `design-system` token pattern). If the `impeccable` skill is installed, also run its `/polish` and `/critique` on `src/ui` at those checkpoints; if it is not installed, the written checklists are the standard.
+Apply the design checkpoints written into Phases 1, 7, 9 and 13 (they come from the `ui-ux-pro-max` priority table and the `design-system` token pattern).
+
+The `impeccable` skill (v4.3.1) is installed at project scope: skill in `.claude/skills/impeccable`, sub-agents in `.claude/agents/impeccable-*.md`, design hook in the machine-local `.claude/settings.local.json`. Its engine binary is gitignored; the launcher downloads and sha256-verifies it on first run. All commands go through one skill: `/impeccable <command> [target]`.
+
+- Before Phase 1: run `/impeccable init` once. It writes `PRODUCT.md`; answer its questions from the GDD (audience: alpha testers; purpose: a quiet, hand-painted-anime-style summer skateboarding game; constraints from the plan's Global Constraints).
+- At each design checkpoint: `/impeccable critique` then `/impeccable polish` on `src/ui`, plus the written checklist in the phase.
+- Useful extras: `/impeccable animate` (Phases 5, 7, 11), `/impeccable typeset` (Phase 7), `/impeccable audit` (Phase 13).
+- Refresh the install with `npx impeccable update` and commit the result.
 
 ## Art hand-off
 

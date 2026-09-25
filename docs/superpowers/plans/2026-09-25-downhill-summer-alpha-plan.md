@@ -25,7 +25,7 @@
 - Every phase ends with `npm test` green, `npm run typecheck` green, the browser verification recipe below run, a commit, and a push. Commit messages follow Conventional Commits and end with the `Co-Authored-By:` trailer the harness specifies for the model doing the work (the blocks below show `Co-Authored-By: Claude Opus 5.5 <noreply@anthropic.com>`; substitute the current model's trailer if it differs).
 - Remote: `https://github.com/Lianhahaha/Sunbound.git`, branch `main`. Push after every commit (`git push origin main`); the owner reviews history on GitHub, so nothing stays local-only.
 - Each phase is time-boxed to 1–2 hours. If a phase overruns by more than 30 minutes, stop, commit what passes, and write the remainder as a new task at the end of the plan rather than expanding the phase.
-- Skills in use: `writing-plans` (this document), `ui-ux-pro-max` (design checkpoints: its priority table drives the checklists in Phases 1, 7, 9, 13), `design-system` (three-layer tokens in Phase 1), `game-development` (dev-server lifecycle and screenshots), `browser-automation` (console errors, DOM assertions, screenshots), `test-driven-development` (every core module), `verification-before-completion` (end of every phase). The `impeccable` skill is not installed on this machine; where the plan says "polish pass", run impeccable's `/polish` and `/critique` if it has been installed by then, otherwise run the written checklist.
+- Skills in use: `writing-plans` (this document), `ui-ux-pro-max` (design checkpoints: its priority table drives the checklists in Phases 1, 7, 9, 13), `design-system` (three-layer tokens in Phase 1), `game-development` (dev-server lifecycle and screenshots), `browser-automation` (console errors, DOM assertions, screenshots), `test-driven-development` (every core module), `verification-before-completion` (end of every phase). `impeccable` (skill v4.3.1, installed at project scope in `.claude/skills/impeccable`, engine binary gitignored and re-downloaded by its launcher): run `/impeccable init` once before Phase 1 (it writes `PRODUCT.md`; feed it the GDD), then at every design checkpoint run `/impeccable critique` and `/impeccable polish` on `src/ui` in addition to the written checklist. `/impeccable animate` and `/impeccable typeset` are the relevant extras for Phases 7 and 11.
 
 ---
 
@@ -3124,7 +3124,7 @@ git push origin main
 - Base font 16 px+, dialogue 20 px, line-height 1.5, max 60 characters per line.
 - Enter 220 ms `--ease-out`, exit 140 ms `--ease-in`; `prefers-reduced-motion` makes them instant and disables the typewriter.
 - Errors/feedback: none in dialogue; prompt chip communicates the available action and its key.
-- Polish pass: if `impeccable` is installed run `/polish` on `src/ui`, otherwise walk `docs/art-direction.md` UI rules line by line.
+- Polish pass: run `/impeccable critique` then `/impeccable polish` on `src/ui`, then walk `docs/art-direction.md` UI rules line by line.
 
 **Files:**
 - Create: `src/shared/bus.ts`, `src/shared/store.ts`, `src/game/core/dialogue.ts`, `src/game/systems/DialogueDirector.ts`
