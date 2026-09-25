@@ -15,7 +15,7 @@ Do not re-plan, re-architect, or "improve" the plan before executing it. If a st
 Update this checklist at the end of every phase, right after the phase's commit. Tick the box and write the commit hash.
 
 - [x] Phase 0 — Scaffold and dev loop (1 h) — `c29fa4d` (2026-09-25)
-- [ ] Phase 1 — Design tokens and art direction (1.5 h)
+- [x] Phase 1 — Design tokens and art direction (1.5 h) — `140253c` (2026-09-25)
 - [ ] Phase 2 — Stage framework, terrain, parallax, camera (2 h)
 - [ ] Phase 3 — Walk and run with stamina (1.5 h)
 - [ ] Phase 4 — Skateboard momentum (2 h)
@@ -30,7 +30,7 @@ Update this checklist at the end of every phase, right after the phase's commit.
 - [ ] Phase 13 — Touch, PWA, reduced motion, performance (1.5 h)
 - [ ] Phase 14 — Title, feedback, tester build (1 h)
 
-**Current phase:** 1. (`/impeccable init` is done: `PRODUCT.md` was written on 2026-09-25 from the owner's messages and the GDD without a live interview. Items marked *(inferred)* there still need the owner's confirmation; rerun `/impeccable init` in a session opened in this folder to review them.)
+**Current phase:** 2. (`/impeccable init` is done: `PRODUCT.md` was written on 2026-09-25 from the owner's messages and the GDD without a live interview. Items marked *(inferred)* there still need the owner's confirmation; rerun `/impeccable init` in a session opened in this folder to review them.)
 
 **Deferred tasks** (append here anything a phase could not finish inside its time box, with the phase number):
 
