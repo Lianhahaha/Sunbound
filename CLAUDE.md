@@ -30,7 +30,7 @@ Update this checklist at the end of every phase, right after the phase's commit.
 - [ ] Phase 13 — Touch, PWA, reduced motion, performance (1.5 h)
 - [ ] Phase 14 — Title, feedback, tester build (1 h)
 
-**Current phase:** 1. Before starting it, run `/impeccable init` once (see Design skills below).
+**Current phase:** 1. (`/impeccable init` is done: `PRODUCT.md` was written on 2026-09-25 from the owner's messages and the GDD without a live interview. Items marked *(inferred)* there still need the owner's confirmation; rerun `/impeccable init` in a session opened in this folder to review them.)
 
 **Deferred tasks** (append here anything a phase could not finish inside its time box, with the phase number):
 
