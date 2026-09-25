@@ -1,4 +1,6 @@
-html, body { margin: 0; height: 100%; overflow: hidden; background: #f4ecd8; }
+@import './tokens.css';
+html, body { margin: 0; height: 100%; overflow: hidden; background: var(--color-bg-paper); color: var(--color-text); }
+::selection { background: var(--color-selection); color: var(--color-text); }
 #game-root { position: fixed; inset: 0; }
 #game-root canvas { display: block; }
 #ui-root { position: fixed; pointer-events: none; overflow: hidden; }

@@ -11,7 +11,11 @@
     "build": "tsc --noEmit && vite build",
     "preview": "vite preview --port 4173",
     "test:watch": "vitest",
-    "typecheck": "tsc --noEmit"
+    "typecheck": "tsc --noEmit",
+    "tokens": "node scripts/build-tokens.mjs",
+    "check:tokens": "node scripts/build-tokens.mjs && node scripts/check-tokens.mjs",
+    "pretest": "node scripts/build-tokens.mjs",
+    "predev": "node scripts/build-tokens.mjs"
   },
   "repository": {
     "type": "git",

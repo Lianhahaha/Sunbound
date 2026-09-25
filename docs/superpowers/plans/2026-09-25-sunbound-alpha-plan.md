@@ -51,6 +51,8 @@ node "C:\Users\My PC\.claude\skills\game-development\game.mjs" stop --dir "C:\Us
 
 **Isolated world:** the browser-automation skill drives Chrome through patchright, which runs `--eval` and `page.evaluate(fn)` in an isolated world. DOM queries work there; page globals (`window.__game`, `window.__dbg`) do not exist. Read globals with `page.evaluate(fn, arg, false)` inside `qa/*.mjs` scripts (every call in this plan already passes `undefined, false`), or from the command line with `DBG_EXPR="<expression>" node ".../browser.mjs" http://localhost:5180/ --script ./qa/dbg.mjs` (helper created in Phase 0). `localStorage` is shared and works in either world.
 
+If `game.mjs run` exits with "Port 5180 is already in use", the owner already has `npm run dev` running. Use that server for the checks (Vite serves the current files) and never stop the owner's process.
+
 Read the screenshot PNG after step 3. Headless Chrome may use the Canvas renderer (no camera post-FX); judge layout and presence, not colour grading. Zero `console.error` lines is a hard gate. `window.__dbg` is defined in Phase 2 and grows in later phases; before Phase 2 use `--eval "!!document.querySelector('canvas')"` (a DOM query, so the isolated world is fine) or `--script ./qa/phase0.mjs`.
 
 ---
@@ -414,6 +416,8 @@ git push origin main
 ---
 
 ## Phase 1: Design Tokens and Art Direction (1.5 h)
+
+> **Executed 2026-09-25.** Deviations from the text below: `scripts/check-tokens.mjs` also flags quoted `'#rrggbb'` strings in `.ts`/`.tsx` files (the regex below only caught `0xRRGGBB` there and missed `config.ts`); a `color-selection` semantic token (`{sky-200}`) with a tested contrast pair themes `::selection` in `base.css`, following impeccable's craft floor ("browser surfaces"); `docs/art-direction.md` was extracted verbatim from Step 7 plus one "Browser surfaces" UI rule. Design checkpoint: written checklist passed and `impeccable detect src/ui index.html` reported 0 findings. `/impeccable critique` and `/impeccable polish` were not run because no UI surface exists yet beyond tokens; they start at Phase 7.
 
 **Deliverable:** `design/tokens.json` is the single source of colour, motion, and spacing truth. A build script generates `src/ui/tokens.css` and `src/game/palette.ts`. A Vitest test proves the text/background pairs meet WCAG contrast. A lint script fails the build on raw hex anywhere else in `src/`. `docs/art-direction.md` records the painter/animator contract from the GDD sections 8 and 9.
 

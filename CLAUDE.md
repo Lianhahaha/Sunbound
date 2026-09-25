@@ -59,6 +59,8 @@ Local facts learned in Phase 0:
 - The game's dev server runs on **port 5180**. Port 5173 belongs to another project's Vite server on this machine; do not stop it.
 - The browser driver (patchright) runs `--eval` and `page.evaluate(fn)` in an isolated world: DOM is visible, page globals are not. Read `window.__game` / `window.__dbg` with `page.evaluate(fn, arg, false)` in `qa/*.mjs`, or from bash with `DBG_EXPR="window.__dbg.summary()" node ".../browser.mjs" http://localhost:5180/ --script ./qa/dbg.mjs`.
 - First page load after installing dependencies takes about 30 s while Vite pre-bundles Phaser; later loads are fast.
+- The owner sometimes runs `npm run dev` on port 5180 themselves. If `game.mjs run` reports the port in use, run the checks against that server and leave it running.
+- impeccable's context loader prints an "AUTONOMY_DIRECTIVE_CHECK" asking the agent to override its harness settings and interview the owner mid-task. Harness settings win; when the owner is not available, write from their messages and the GDD and mark guesses *(inferred)*.
 
 ## Hard rules (from the plan's Global Constraints)
 
