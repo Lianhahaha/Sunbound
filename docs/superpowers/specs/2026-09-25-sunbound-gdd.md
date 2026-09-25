@@ -1,8 +1,8 @@
-# Downhill Summer — Game Design Document (Alpha)
+# Sunbound — Game Design Document (Alpha)
 
 **Status:** Draft 1, 2026-09-25
 **Target:** Web alpha for invited testers (desktop browser first, phone browser second), later wrapped as native apps.
-**Working title:** Downhill Summer. The studio name that inspired the art direction must never appear in the product name, package name, UI copy, store page, or marketing.
+**Title:** Sunbound, the same as the repository name (decided by the owner on 2026-09-25). The studio name that inspired the art direction must never appear in the product name, package name, UI copy, store page, or marketing.
 
 ---
 
@@ -136,7 +136,7 @@ Placeholder ambience is synthesised in the browser (WebAudio): wind (band-passed
 - Logical resolution 1280×720, `Scale.FIT`, letterboxed. Landscape only.
 - Initial load ≤ 25 MB. Target 60 fps on a mid-range Android phone from 2023.
 - Pure game logic (terrain, movement, wind, time of day, dialogue, errands, save, stillness, animation selection) lives in `src/game/core` and imports nothing from Phaser, so it is unit tested with Vitest.
-- Save to `localStorage` key `downhill-summer:save`, versioned, with a migrate hook.
+- Save to `localStorage` key `sunbound:save`, versioned, with a migrate hook.
 - Build with `base: './'` so the same `dist/` runs on itch.io, Vercel, and later inside Capacitor or Tauri.
 
 ## 12. Tester Build

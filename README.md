@@ -1,4 +1,4 @@
-# Downhill Summer
+# Sunbound
 
 A quiet summer skateboarding game in a hand-painted anime style. Web alpha in development.
 

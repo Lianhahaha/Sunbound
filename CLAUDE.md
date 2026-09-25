@@ -1,12 +1,12 @@
-# Downhill Summer — instructions for AI sessions
+# Sunbound — instructions for AI sessions
 
-This folder is a game project: a hand-painted-anime-style 2.5D skateboarding game for the web, working title **Downhill Summer**. Nothing is improvised here. The design and the build order are already written. Your job in any session is to pick up the next unfinished phase and execute it exactly as written.
+This folder is a game project: a hand-painted-anime-style 2.5D skateboarding game for the web, titled **Sunbound**. Nothing is improvised here. The design and the build order are already written. Your job in any session is to pick up the next unfinished phase and execute it exactly as written.
 
 ## Read in this order
 
 1. This file (status and rules).
-2. `docs/superpowers/specs/2026-09-25-downhill-summer-gdd.md` — the game design document. Explains what the game is and why.
-3. `docs/superpowers/plans/2026-09-25-downhill-summer-alpha-plan.md` — the implementation plan. Fifteen phases (0–14), each boxed to 1–2 hours, each with files, interfaces, failing tests first, full code, a browser verification script, and a commit step.
+2. `docs/superpowers/specs/2026-09-25-sunbound-gdd.md` — the game design document. Explains what the game is and why.
+3. `docs/superpowers/plans/2026-09-25-sunbound-alpha-plan.md` — the implementation plan. Fifteen phases (0–14), each boxed to 1–2 hours, each with files, interfaces, failing tests first, full code, a browser verification script, and a commit step.
 
 Do not re-plan, re-architect, or "improve" the plan before executing it. If a step is wrong when you reach it, fix the smallest thing that makes it work, note the deviation in the phase's commit message, and keep going.
 
@@ -41,7 +41,7 @@ Update this checklist at the end of every phase, right after the phase's commit.
 - Remote: `https://github.com/Lianhahaha/Sunbound.git` (public), branch `main`.
 - **Commit and push after every update.** Every change set (a phase, a doc edit, a tooling install, a progress tick) gets its own commit, followed immediately by `git push origin main`. Never leave commits only on the local machine.
 - Commit messages follow Conventional Commits and end with the `Co-Authored-By:` trailer your harness specifies for the model doing the work (today: `Co-Authored-By: Claude Opus 5.5 <noreply@anthropic.com>`).
-- The repository name is "Sunbound"; the product name in the plan is still "Downhill Summer" until the owner decides otherwise.
+- The product is named **Sunbound**, the same as the repository (owner decision, 2026-09-25).
 
 ## How to run a phase
 
@@ -63,7 +63,7 @@ Local facts learned in Phase 0:
 ## Hard rules (from the plan's Global Constraints)
 
 - Phaser **3.90.0** only. Never install Phaser 4.x. TypeScript 5.9.3, Vite 8.3.1, Vitest 5.0.1, React 19.3.0.
-- Product name "Downhill Summer", package `downhill-summer`. The word "Ghibli" must not appear in `package.json`, anything under `src/` or `public/`, `index.html`, or tester-facing docs.
+- Product name "Sunbound", package `sunbound`. The word "Ghibli" must not appear in `package.json`, anything under `src/` or `public/`, `index.html`, or tester-facing docs.
 - All simulation logic lives in `src/game/core` with no Phaser imports and is unit tested. Phaser scenes only read input, call the pure step functions, and sync sprites.
 - No raw colour literals outside `design/tokens.json` and the generated `src/ui/tokens.css` / `src/game/palette.ts`. `npm run check:tokens` enforces it.
 - Character sprites animate at 12 fps; world, camera, particles, UI at 60 fps. UI enter 220 ms, exit 140 ms. `prefers-reduced-motion` respected.

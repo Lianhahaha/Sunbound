@@ -1,20 +1,20 @@
-# Downhill Summer Alpha — Implementation Plan
+# Sunbound Alpha — Implementation Plan
 
 > **For agentic workers:** REQUIRED SUB-SKILL: Use the subagent-driven-development skill (recommended) or the executing-plans skill to implement this plan task-by-task. Steps use checkbox (`- [ ]`) syntax for tracking.
 
-**Goal:** Ship a playable, web-hosted Day 1 of "Downhill Summer" (three stages, walk + skate movement, wind and time-of-day atmosphere, dialogue, errands, sketchbook, spirit, journal) to invited alpha testers, built entirely against code-generated placeholder art that painted assets can replace by texture key.
+**Goal:** Ship a playable, web-hosted Day 1 of "Sunbound" (three stages, walk + skate movement, wind and time-of-day atmosphere, dialogue, errands, sketchbook, spirit, journal) to invited alpha testers, built entirely against code-generated placeholder art that painted assets can replace by texture key.
 
 **Architecture:** Phaser 3 renders the world on a canvas; React 19 renders all text UI in a DOM overlay aligned to the canvas. All simulation logic (terrain, movement, wind, time of day, dialogue, errands, save, stillness, animation selection) is pure TypeScript in `src/game/core` with no Phaser imports, unit-tested with Vitest. Phaser scenes only read input, call the pure step functions, and sync sprites. A typed event bus connects the Phaser world and the React overlay.
 
 **Tech Stack:** Node 24.16, npm 11.13, Phaser 3.90.0, TypeScript 5.9.3, Vite 8.3.1, Vitest 5.0.1, React 19.3.0, react-dom 19.3.0, @vitejs/plugin-react 6.1.1, vite-plugin-pwa 1.3.0 (Phase 13 only). No other runtime dependencies.
 
-**Spec:** `docs/superpowers/specs/2026-09-25-downhill-summer-gdd.md` (read it first; this plan implements sections 3 to 12 of it for Day 1).
+**Spec:** `docs/superpowers/specs/2026-09-25-sunbound-gdd.md` (read it first; this plan implements sections 3 to 12 of it for Day 1).
 
 ## Global Constraints
 
 - Project root: `C:\Users\My PC\OneDrive\Documents\Ghibli game`. All paths below are relative to it. All shell commands run from it.
 - Phaser is pinned to `3.90.0`. Never install Phaser 4.x. TypeScript is pinned to `5.9.3` (not 7.x).
-- Product name is "Downhill Summer", npm package name `downhill-summer`. The word "Ghibli" must not appear in `package.json`, any file under `src/`, `public/`, `index.html`, or tester-facing docs. (The folder name is the owner's choice and is not shipped.)
+- Product name is "Sunbound", npm package name `sunbound`. The word "Ghibli" must not appear in `package.json`, any file under `src/`, `public/`, `index.html`, or tester-facing docs. (The folder name is the owner's choice and is not shipped.)
 - Logical resolution 1280×720, `Phaser.Scale.FIT`, `CENTER_BOTH`. Landscape only.
 - Character animations run at 12 fps (idle 6 fps, sit and tired 4 fps). World, camera, particles, and UI run at 60 fps.
 - No raw colour literals outside `design/tokens.json` and the two generated files `src/ui/tokens.css` and `src/game/palette.ts`. `npm run check:tokens` enforces this from Phase 1 onward.
@@ -62,7 +62,7 @@ design/tokens.json                   three-layer design tokens (source of truth)
 scripts/build-tokens.mjs             tokens.json -> src/ui/tokens.css + src/game/palette.ts
 scripts/check-tokens.mjs             fails on raw colour literals in src/
 scripts/make-icons.mjs               PWA icons (Phase 13)
-scripts/zip-itch.mjs                 dist/ -> build/downhill-summer-alpha.zip (Phase 14)
+scripts/zip-itch.mjs                 dist/ -> build/sunbound-alpha.zip (Phase 14)
 .codegpt-game.json                   game-development skill manifest (dev server)
 index.html                           #game-root + #ui-root, fonts, viewport meta
 src/main.ts                          boots Phaser, mounts React, dev debug hooks
@@ -154,7 +154,7 @@ Total: 24.5 hours of boxed work.
 
 > **Executed 2026-09-25. Deviations from the original text, already folded in below:** dev server port 5180 (5173 is taken by another local project), ready pattern `ready in` (Vite colours split `Local:` with ANSI codes), exact version pins plus `@types/node@24.13.6` with `"node"` in `tsconfig` types (`vite.config.ts` uses `process`), `.gitattributes` for LF endings, and `qa/dbg.mjs` for main-world evaluation (see Verification Recipe).
 
-**Deliverable:** `npm run dev` serves a 1280×720 letterboxed canvas showing a sky gradient and the text "Downhill Summer / boot ok". `npm test` runs one passing smoke test. The game-development manifest starts and stops the dev server.
+**Deliverable:** `npm run dev` serves a 1280×720 letterboxed canvas showing a sky gradient and the text "Sunbound / boot ok". `npm test` runs one passing smoke test. The game-development manifest starts and stops the dev server.
 
 **Files:**
 - Create: `package.json`, `tsconfig.json`, `vite.config.ts`, `vitest.config.ts`, `index.html`, `.gitignore`, `.gitattributes`, `.codegpt-game.json`, `README.md`, `qa/phase0.mjs`, `qa/dbg.mjs`
@@ -162,14 +162,14 @@ Total: 24.5 hours of boxed work.
 - Test: `tests/smoke.test.ts`
 
 **Interfaces:**
-- Produces: `createGame(parentId: string): Phaser.Game`; `APP_NAME = 'Downhill Summer'`; `APP_VERSION: string`; scene key `'Boot'`.
+- Produces: `createGame(parentId: string): Phaser.Game`; `APP_NAME = 'Sunbound'`; `APP_VERSION: string`; scene key `'Boot'`.
 
 - [ ] **Step 1: Initialise the repository and install pinned dependencies**
 
 ```bash
 git init
 npm init -y
-npm pkg set name="downhill-summer" version="0.1.0" private=true type="module" description="A quiet summer skateboarding game. Web alpha."
+npm pkg set name="sunbound" version="0.1.0" private=true type="module" description="A quiet summer skateboarding game. Web alpha."
 npm pkg set scripts.dev="vite" scripts.build="tsc --noEmit && vite build" scripts.preview="vite preview --port 4173" scripts.test="vitest run" scripts.test:watch="vitest" scripts.typecheck="tsc --noEmit"
 npm install --save-exact phaser@3.90.0 react@19.3.0 react-dom@19.3.0
 npm install --save-exact -D vite@8.3.1 typescript@5.9.3 vitest@5.0.1 @vitejs/plugin-react@6.1.1 @types/react@19.3.0 @types/react-dom@19.3.0 @types/node@24.13.6
@@ -249,7 +249,7 @@ declare const __APP_VERSION__: string;
 `.codegpt-game.json`:
 ```json
 {
-  "name": "downhill-summer",
+  "name": "sunbound",
   "engine": "generic",
   "launch": { "cmd": "node", "args": ["node_modules/vite/bin/vite.js", "--port", "5180", "--strictPort"] },
   "log": { "stdout": true },
@@ -267,7 +267,7 @@ import { APP_NAME, APP_VERSION } from '../src/shared/constants';
 
 describe('constants', () => {
   it('names the product', () => {
-    expect(APP_NAME).toBe('Downhill Summer');
+    expect(APP_NAME).toBe('Sunbound');
   });
   it('has a version string', () => {
     expect(APP_VERSION).toMatch(/^\d+\.\d+\.\d+/);
@@ -284,10 +284,10 @@ Expected: FAIL, "Cannot find module '../src/shared/constants'".
 
 `src/shared/constants.ts`:
 ```ts
-export const APP_NAME = 'Downhill Summer';
+export const APP_NAME = 'Sunbound';
 export const APP_VERSION: string =
   typeof __APP_VERSION__ !== 'undefined' ? __APP_VERSION__ : '0.0.0-test';
-export const SAVE_KEY = 'downhill-summer:save';
+export const SAVE_KEY = 'sunbound:save';
 export const GAME_WIDTH = 1280;
 export const GAME_HEIGHT = 720;
 export const FEEDBACK_URL = 'https://forms.gle/REPLACE_BEFORE_ALPHA';
@@ -300,7 +300,7 @@ export const FEEDBACK_URL = 'https://forms.gle/REPLACE_BEFORE_ALPHA';
   <head>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
-    <title>Downhill Summer</title>
+    <title>Sunbound</title>
     <link rel="preconnect" href="https://fonts.googleapis.com" />
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
     <link href="https://fonts.googleapis.com/css2?family=Klee+One:wght@400;600&family=Shippori+Mincho+B1:wght@500;700&display=swap" rel="stylesheet" />
@@ -654,7 +654,7 @@ Expected: all token tests PASS; `check:tokens ok`.
 
 `docs/art-direction.md` (this is a contract for the painter and animator; write it in full):
 ```markdown
-# Downhill Summer — Art Direction and Asset Contract
+# Sunbound — Art Direction and Asset Contract
 
 ## Mood
 Late-summer afternoon in a hillside seaside town. Warm key light, cool violet shadows (never grey or black), deep saturated greens, big cumulus clouds, painterly edges. Everything looks hand-painted; nothing looks vector or flat-design.
@@ -3864,9 +3864,9 @@ describe('save', () => {
   it('returns defaults on missing, corrupt, or foreign-version data', () => {
     const st = memStorage();
     expect(loadSave(st)).toEqual(defaultSave());
-    st.setItem('downhill-summer:save', '{not json');
+    st.setItem('sunbound:save', '{not json');
     expect(loadSave(st)).toEqual(defaultSave());
-    st.setItem('downhill-summer:save', JSON.stringify({ ...defaultSave(), version: SAVE_VERSION + 99 }));
+    st.setItem('sunbound:save', JSON.stringify({ ...defaultSave(), version: SAVE_VERSION + 99 }));
     expect(loadSave(st)).toEqual(defaultSave());
   });
   it('hasSave reflects a real save', () => {
@@ -4056,7 +4056,7 @@ class GameStateImpl {
     this.dirty = false;
   }
   reset(): void {
-    window.localStorage.removeItem('downhill-summer:save');
+    window.localStorage.removeItem('sunbound:save');
     this.save = loadSave(window.localStorage);
     this.pushHud();
   }
@@ -4257,7 +4257,7 @@ export default async function run(page, ui) {
   await page.waitForTimeout(400);
   await page.evaluate(() => window.__dbg.setFlag('coins:given'), undefined, false);
   const flags = await page.evaluate(() => window.__dbg.flags(), undefined, false);
-  const saved = await page.evaluate(() => JSON.parse(localStorage.getItem('downhill-summer:save') || 'null'));
+  const saved = await page.evaluate(() => JSON.parse(localStorage.getItem('sunbound:save') || 'null'));
   return { nearX: near.x, prompt: prompt.includes('Talk to Miki'), talk: talk.includes('orange cat'), flags, coins: saved && saved.coins };
 }
 ```
@@ -4628,7 +4628,7 @@ export default async function run(page, ui) {
   await page.waitForTimeout(800);
   const postcard = await ui.snapshot({ full: true });
   await page.keyboard.press('Escape'); await page.waitForTimeout(300);
-  const save = await page.evaluate(() => { window.__dbg.scene(); return JSON.parse(localStorage.getItem('downhill-summer:save')); }, undefined, false);
+  const save = await page.evaluate(() => { window.__dbg.scene(); return JSON.parse(localStorage.getItem('sunbound:save')); }, undefined, false);
   return { intro: intro.includes('Last stop'), hintWalk: hintWalk.includes('Hold to walk'), postcard: postcard.includes('New postcard'), postcards: save && save.postcards.length };
 }
 ```
@@ -4799,7 +4799,7 @@ export default async function run(page, ui) {
   await page.keyboard.press('KeyE'); await page.waitForTimeout(1200);
   const vend = await ui.snapshot({ full: true });
   await page.keyboard.press('KeyE'); await page.waitForTimeout(400);
-  const coins = await page.evaluate(() => JSON.parse(localStorage.getItem('downhill-summer:save')).coins);
+  const coins = await page.evaluate(() => JSON.parse(localStorage.getItem('sunbound:save')).coins);
   return { accepted: afterFumi.flags['errand:bento:accepted'], phase: afterFumi.summary.phase, vend: vend.includes('Clunk'), coins };
 }
 ```
@@ -5045,9 +5045,9 @@ export function EndCard() {
         <p>Tell us what felt good, what felt wrong, and where the board misbehaved.</p>
         <div className="choices">
           <a className="btn primary" href={FEEDBACK_URL} target="_blank" rel="noreferrer">Send feedback</a>
-          <button className="btn" onClick={() => { localStorage.removeItem('downhill-summer:save'); location.reload(); }}>Play Day 1 again</button>
+          <button className="btn" onClick={() => { localStorage.removeItem('sunbound:save'); location.reload(); }}>Play Day 1 again</button>
         </div>
-        <p className="muted">Downhill Summer alpha {APP_VERSION}</p>
+        <p className="muted">Sunbound alpha {APP_VERSION}</p>
       </section>
     </div>
   );
@@ -5484,7 +5484,7 @@ export function TouchControls() {
 export function RotateNotice() {
   return (
     <div className="scrim rotate" role="alert">
-      <div className="paper journal"><h2>Turn your phone sideways</h2><p>Downhill Summer plays in landscape.</p></div>
+      <div className="paper journal"><h2>Turn your phone sideways</h2><p>Sunbound plays in landscape.</p></div>
     </div>
   );
 }
@@ -5588,8 +5588,8 @@ export default defineConfig({
       registerType: 'autoUpdate',
       includeAssets: ['art/manifest.json', 'icons/*.png'],
       manifest: {
-        name: 'Downhill Summer',
-        short_name: 'Downhill',
+        name: 'Sunbound',
+        short_name: 'Sunbound',
         description: 'A quiet summer skateboarding game. Alpha.',
         theme_color: prim['sky-700'],
         background_color: prim['paper-100'],
@@ -5753,7 +5753,7 @@ import { telemetry } from '../shared/telemetry';
 export function FeedbackModal() {
   const [copied, setCopied] = useState<'idle' | 'ok' | 'fail'>('idle');
   const diagnostics = () => {
-    const save = JSON.parse(localStorage.getItem('downhill-summer:save') ?? 'null');
+    const save = JSON.parse(localStorage.getItem('sunbound:save') ?? 'null');
     return JSON.stringify({
       version: APP_VERSION, userAgent: navigator.userAgent, screen: [innerWidth, innerHeight], ...telemetry.snapshot(),
       save: save && { stage: save.stage, phase: save.phase, coins: save.coins, flags: Object.keys(save.flags), postcards: save.postcards.length, playtimeSec: Math.round(save.playtimeSec) },
@@ -5778,7 +5778,7 @@ export function FeedbackModal() {
   );
 }
 ```
-Add `'feedback:close': undefined` to `BusEvents`. `mount.tsx`: `title: true`, `feedback: false` in `UiState`; `bus.on('title:start', () => uiStore.set({ title: false }))`, `bus.on('feedback:open', () => uiStore.set({ feedback: true }))`, `bus.on('feedback:close', () => uiStore.set({ feedback: false }))`. `App.tsx`: a persistent 44 px "Feedback" paper chip button top-right (hidden while `title`) that emits `feedback:open`; render `TitleScreen` (with `canContinue = localStorage.getItem('downhill-summer:save') !== null`) and `FeedbackModal`. `EndCard`: replace the raw link with a button emitting `feedback:open`.
+Add `'feedback:close': undefined` to `BusEvents`. `mount.tsx`: `title: true`, `feedback: false` in `UiState`; `bus.on('title:start', () => uiStore.set({ title: false }))`, `bus.on('feedback:open', () => uiStore.set({ feedback: true }))`, `bus.on('feedback:close', () => uiStore.set({ feedback: false }))`. `App.tsx`: a persistent 44 px "Feedback" paper chip button top-right (hidden while `title`) that emits `feedback:open`; render `TitleScreen` (with `canContinue = localStorage.getItem('sunbound:save') !== null`) and `FeedbackModal`. `EndCard`: replace the raw link with a button emitting `feedback:open`.
 
 `StageScene`: `private started = false;` `bus.on('title:start', ({ continue: cont }) => { this.started = true; if (!cont) { gameState.reset(); this.travel('stairs', 'start'); } else this.startIntro(); })` (subscribe once in `create`, unsubscribe in `shutdown`), `this.inputs.blocked` includes `!this.started`; the Phase 9 intro moves into `startIntro()` and also runs from `create()` when `this.started` is already true (after a travel).
 
@@ -5792,7 +5792,7 @@ import { execSync } from 'node:child_process';
 import { existsSync, mkdirSync, rmSync } from 'node:fs';
 
 mkdirSync('build', { recursive: true });
-const out = 'build/downhill-summer-alpha.zip';
+const out = 'build/sunbound-alpha.zip';
 if (existsSync(out)) rmSync(out);
 if (process.platform === 'win32') {
   execSync(`powershell -NoProfile -Command "Compress-Archive -Path dist\\* -DestinationPath ${out}"`, { stdio: 'inherit' });
@@ -5807,7 +5807,7 @@ npm run release
 ```
 `docs/TESTERS.md`:
 ```markdown
-# Downhill Summer — Alpha Tester Notes
+# Sunbound — Alpha Tester Notes
 
 Thank you for playing an unfinished game. This build is Day 1 of 7 with placeholder art drawn by code; painted art comes later. Nothing you see is final except the feel of the skateboard, which is exactly what we want your opinion on.
 
@@ -5846,7 +5846,7 @@ node "C:\Users\My PC\.claude\skills\browser-automation\browser.mjs" http://local
 ```
 `qa/phase14.mjs`: click "New summer" by ref, wait 1500 ms, confirm the bus-driver line in the snapshot, click the "Feedback" chip, click "Copy diagnostics", return the snapshot text (expect "Copied" or the fallback textarea) and `navigator.serviceWorker.controller !== null` after a reload. Expected: title renders from the production bundle with relative asset paths, Day 1 starts, feedback modal works, zero console errors, `sw.js` registered.
 
-itch.io upload (manual, 10 minutes): create project → Kind of project: HTML → upload `build/downhill-summer-alpha.zip` → tick "This file will be played in the browser" → Embed options: 1280×720, tick "Mobile friendly" and "Fullscreen button", orientation Landscape → Visibility: Restricted with a password → share the link and password with testers along with `docs/TESTERS.md`. Optional: `npx vercel --prod` with a `vercel.json` of `{ "outputDirectory": "dist" }` for a plain HTTPS link (needed for PWA install on phones).
+itch.io upload (manual, 10 minutes): create project → Kind of project: HTML → upload `build/sunbound-alpha.zip` → tick "This file will be played in the browser" → Embed options: 1280×720, tick "Mobile friendly" and "Fullscreen button", orientation Landscape → Visibility: Restricted with a password → share the link and password with testers along with `docs/TESTERS.md`. Optional: `npx vercel --prod` with a `vercel.json` of `{ "outputDirectory": "dist" }` for a plain HTTPS link (needed for PWA install on phones).
 
 - [ ] **Step 6: Commit and tag**
 
@@ -5900,7 +5900,7 @@ git push origin v0.1.0-alpha.1
 
 ## Execution Handoff
 
-Plan complete and saved to `docs/superpowers/plans/2026-09-25-downhill-summer-alpha-plan.md`. Two execution options:
+Plan complete and saved to `docs/superpowers/plans/2026-09-25-sunbound-alpha-plan.md`. Two execution options:
 
 1. **Subagent-Driven (recommended):** one fresh subagent per phase, review between phases, fast iteration. Requires the `subagent-driven-development` skill.
 2. **Inline Execution:** execute phases in one session with the `executing-plans` skill, checkpoint after each phase's commit.
