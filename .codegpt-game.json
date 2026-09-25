@@ -1,0 +1,8 @@
+{
+  "name": "downhill-summer",
+  "engine": "generic",
+  "launch": { "cmd": "node", "args": ["node_modules/vite/bin/vite.js", "--port", "5180", "--strictPort"] },
+  "log": { "stdout": true },
+  "ready": "ready in",
+  "sourceRoots": ["src"]
+}

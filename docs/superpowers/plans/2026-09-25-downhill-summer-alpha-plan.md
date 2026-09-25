@@ -37,19 +37,21 @@ npm test
 npm run typecheck
 npm run check:tokens        # from Phase 1 onward
 
-# 2. Start the dev server detached and wait for Vite's "Local:" line
+# 2. Start the dev server detached and wait for Vite's "ready in" line
 node "C:\Users\My PC\.claude\skills\game-development\game.mjs" run --dir "C:\Users\My PC\OneDrive\Documents\Ghibli game"
 
 # 3. Load the page headless: console errors, failed requests, DOM state, screenshot
-node "C:\Users\My PC\.claude\skills\browser-automation\browser.mjs" http://localhost:5173/ --wait canvas --screenshot shots/phase-N.png
-node "C:\Users\My PC\.claude\skills\browser-automation\browser.mjs" http://localhost:5173/ --wait canvas --eval "window.__dbg ? window.__dbg.summary() : 'no dbg'"
+node "C:\Users\My PC\.claude\skills\browser-automation\browser.mjs" http://localhost:5180/ --wait canvas --screenshot shots/phase-N.png
+DBG_EXPR="window.__dbg ? window.__dbg.summary() : 'no dbg'" node "C:\Users\My PC\.claude\skills\browser-automation\browser.mjs" http://localhost:5180/ --script ./qa/dbg.mjs
 
 # 4. New server-side output since last call, then stop the server
 node "C:\Users\My PC\.claude\skills\game-development\game.mjs" logs --errors --dir "C:\Users\My PC\OneDrive\Documents\Ghibli game"
 node "C:\Users\My PC\.claude\skills\game-development\game.mjs" stop --dir "C:\Users\My PC\OneDrive\Documents\Ghibli game"
 ```
 
-Read the screenshot PNG after step 3. Headless Chrome may use the Canvas renderer (no camera post-FX); judge layout and presence, not colour grading. Zero `console.error` lines is a hard gate. `window.__dbg` is defined in Phase 2 and grows in later phases; before Phase 2 use `--eval "!!document.querySelector('canvas')"`.
+**Isolated world:** the browser-automation skill drives Chrome through patchright, which runs `--eval` and `page.evaluate(fn)` in an isolated world. DOM queries work there; page globals (`window.__game`, `window.__dbg`) do not exist. Read globals with `page.evaluate(fn, arg, false)` inside `qa/*.mjs` scripts (every call in this plan already passes `undefined, false`), or from the command line with `DBG_EXPR="<expression>" node ".../browser.mjs" http://localhost:5180/ --script ./qa/dbg.mjs` (helper created in Phase 0). `localStorage` is shared and works in either world.
+
+Read the screenshot PNG after step 3. Headless Chrome may use the Canvas renderer (no camera post-FX); judge layout and presence, not colour grading. Zero `console.error` lines is a hard gate. `window.__dbg` is defined in Phase 2 and grows in later phases; before Phase 2 use `--eval "!!document.querySelector('canvas')"` (a DOM query, so the isolated world is fine) or `--script ./qa/phase0.mjs`.
 
 ---
 
@@ -150,10 +152,12 @@ Total: 24.5 hours of boxed work.
 
 ## Phase 0: Scaffold and Dev Loop (1 h)
 
+> **Executed 2026-09-25. Deviations from the original text, already folded in below:** dev server port 5180 (5173 is taken by another local project), ready pattern `ready in` (Vite colours split `Local:` with ANSI codes), exact version pins plus `@types/node@24.13.6` with `"node"` in `tsconfig` types (`vite.config.ts` uses `process`), `.gitattributes` for LF endings, and `qa/dbg.mjs` for main-world evaluation (see Verification Recipe).
+
 **Deliverable:** `npm run dev` serves a 1280×720 letterboxed canvas showing a sky gradient and the text "Downhill Summer / boot ok". `npm test` runs one passing smoke test. The game-development manifest starts and stops the dev server.
 
 **Files:**
-- Create: `package.json`, `tsconfig.json`, `vite.config.ts`, `vitest.config.ts`, `index.html`, `.gitignore`, `.codegpt-game.json`, `README.md`
+- Create: `package.json`, `tsconfig.json`, `vite.config.ts`, `vitest.config.ts`, `index.html`, `.gitignore`, `.gitattributes`, `.codegpt-game.json`, `README.md`, `qa/phase0.mjs`, `qa/dbg.mjs`
 - Create: `src/main.ts`, `src/vite-env.d.ts`, `src/shared/constants.ts`, `src/game/config.ts`, `src/game/scenes/BootScene.ts`, `src/ui/base.css`
 - Test: `tests/smoke.test.ts`
 
@@ -167,8 +171,8 @@ git init
 npm init -y
 npm pkg set name="downhill-summer" version="0.1.0" private=true type="module" description="A quiet summer skateboarding game. Web alpha."
 npm pkg set scripts.dev="vite" scripts.build="tsc --noEmit && vite build" scripts.preview="vite preview --port 4173" scripts.test="vitest run" scripts.test:watch="vitest" scripts.typecheck="tsc --noEmit"
-npm install phaser@3.90.0 react@19.3.0 react-dom@19.3.0
-npm install -D vite@8.3.1 typescript@5.9.3 vitest@5.0.1 @vitejs/plugin-react@6.1.1 @types/react@19.3.0 @types/react-dom@19.3.0
+npm install --save-exact phaser@3.90.0 react@19.3.0 react-dom@19.3.0
+npm install --save-exact -D vite@8.3.1 typescript@5.9.3 vitest@5.0.1 @vitejs/plugin-react@6.1.1 @types/react@19.3.0 @types/react-dom@19.3.0 @types/node@24.13.6
 ```
 
 Expected: `package.json` lists exactly those dependencies. Run `npm ls phaser` and confirm `phaser@3.90.0`.
@@ -202,7 +206,7 @@ shots
     "isolatedModules": true,
     "skipLibCheck": true,
     "noEmit": true,
-    "types": ["vite/client"]
+    "types": ["vite/client", "node"]
   },
   "include": ["src", "tests", "design", "vite.config.ts", "vitest.config.ts"]
 }
@@ -219,7 +223,7 @@ export default defineConfig({
   define: {
     __APP_VERSION__: JSON.stringify(process.env.npm_package_version ?? '0.0.0'),
   },
-  server: { port: 5173, strictPort: true },
+  server: { port: 5180, strictPort: true },
   build: { target: 'es2022', chunkSizeWarningLimit: 1600 },
 });
 ```
@@ -247,9 +251,9 @@ declare const __APP_VERSION__: string;
 {
   "name": "downhill-summer",
   "engine": "generic",
-  "launch": { "cmd": "node", "args": ["node_modules/vite/bin/vite.js", "--port", "5173", "--strictPort"] },
+  "launch": { "cmd": "node", "args": ["node_modules/vite/bin/vite.js", "--port", "5180", "--strictPort"] },
   "log": { "stdout": true },
-  "ready": "Local:",
+  "ready": "ready in",
   "sourceRoots": ["src"]
 }
 ```
@@ -392,7 +396,7 @@ Expected: 2 tests PASS; typecheck exits 0.
 
 ```bash
 node "C:\Users\My PC\.claude\skills\game-development\game.mjs" run --dir "C:\Users\My PC\OneDrive\Documents\Ghibli game"
-node "C:\Users\My PC\.claude\skills\browser-automation\browser.mjs" http://localhost:5173/ --wait canvas --eval "!!document.querySelector('canvas')" --screenshot shots/phase-0.png
+node "C:\Users\My PC\.claude\skills\browser-automation\browser.mjs" http://localhost:5180/ --wait canvas --eval "!!document.querySelector('canvas')" --screenshot shots/phase-0.png
 node "C:\Users\My PC\.claude\skills\game-development\game.mjs" stop --dir "C:\Users\My PC\OneDrive\Documents\Ghibli game"
 ```
 Expected: eval prints `true`, zero console errors, screenshot shows a blue-to-pale gradient with the boot text centred.
@@ -1417,7 +1421,7 @@ Expected: all PASS.
 
 Run the Verification Recipe with `shots/phase-2.png`, then:
 ```bash
-node "C:\Users\My PC\.claude\skills\browser-automation\browser.mjs" http://localhost:5173/ --wait canvas --eval "window.__dbg.summary()"
+DBG_EXPR="window.__dbg.summary()" node "C:\Users\My PC\.claude\skills\browser-automation\browser.mjs" http://localhost:5180/ --script ./qa/dbg.mjs
 ```
 Expected: `{ stage: 'stairs', x: 120, y: 300, fps: <number> }`, zero console errors. Screenshot shows sky gradient, two hill bands, foliage at the top, a sand-coloured ground with stone stair segments, a red dot near the left.
 
@@ -1428,10 +1432,10 @@ export default async function run(page) {
   await page.keyboard.down('ArrowRight');
   await page.waitForTimeout(2000);
   await page.keyboard.up('ArrowRight');
-  return page.evaluate(() => window.__dbg.summary());
+  return page.evaluate(() => window.__dbg.summary(), undefined, false);
 }
 ```
-Run: `node "C:\Users\My PC\.claude\skills\browser-automation\browser.mjs" http://localhost:5173/ --script ./qa/phase2.mjs`
+Run: `node "C:\Users\My PC\.claude\skills\browser-automation\browser.mjs" http://localhost:5180/ --script ./qa/phase2.mjs`
 Expected: `x` roughly 700 (600 px travelled plus start), `y` greater than 300 (the probe went down the first stairs).
 
 - [ ] **Step 12: Commit**
@@ -1760,7 +1764,7 @@ export default async function run(page) {
   await page.waitForTimeout(3000);
   await page.keyboard.up('Shift');
   await page.keyboard.up('ArrowRight');
-  return page.evaluate(() => window.__dbg.player());
+  return page.evaluate(() => window.__dbg.player(), undefined, false);
 }
 ```
 Expected: `mode: 'walk'`, `x` between 550 and 800 (ran 230 px/s for 3 s, slowed by nothing on the first flat and faster nothing downhill), `stamina` about 46, `tired: false`.
@@ -2171,12 +2175,12 @@ export default async function run(page) {
   await page.waitForTimeout(700);                    // two pushes onto the first flight
   await page.keyboard.up('ArrowRight');
   await page.waitForTimeout(2500);                   // roll down flight 1 under gravity
-  const rolling = await page.evaluate(() => window.__dbg.player());
+  const rolling = await page.evaluate(() => window.__dbg.player(), undefined, false);
   await page.keyboard.press('Space');
   await page.waitForTimeout(100);
-  const air = await page.evaluate(() => window.__dbg.player());
+  const air = await page.evaluate(() => window.__dbg.player(), undefined, false);
   await page.waitForTimeout(1500);
-  const landed = await page.evaluate(() => window.__dbg.player());
+  const landed = await page.evaluate(() => window.__dbg.player(), undefined, false);
   return { rolling, air, landed };
 }
 ```
@@ -2667,7 +2671,7 @@ export class PlayerActor extends Phaser.GameObjects.Container {
 - [ ] **Step 6: Verify**
 
 Run: `npm test && npm run typecheck && npm run check:tokens` — Expected: PASS.
-Run the Verification Recipe with `shots/phase-5.png`. Then: `node "...browser.mjs" http://localhost:5173/ --wait canvas --eval "(() => { const s = window.__dbg.scene(); return s.player.currentAnim; })()"` → `"idle"`. Run `qa/phase4.mjs` again and confirm no errors; take a second screenshot mid-roll (`--script` with a screenshot call `await page.screenshot({ path: 'shots/phase-5-roll.png' })` after the 2.5 s wait) and confirm the figure leans with the slope and the backpack trails behind.
+Run the Verification Recipe with `shots/phase-5.png`. Then: `DBG_EXPR="window.__dbg.scene().player.currentAnim" node "...browser.mjs" http://localhost:5180/ --script ./qa/dbg.mjs` → `"idle"`. Run `qa/phase4.mjs` again and confirm no errors; take a second screenshot mid-roll (`--script` with a screenshot call `await page.screenshot({ path: 'shots/phase-5-roll.png' })` after the 2.5 s wait) and confirm the figure leans with the slope and the backpack trails behind.
 
 **Design checkpoint (animation, GDD 8.2):** sprite plays at 12 fps while the camera glides; landing squash visible; no interpolation between frames (`sprite.anims.msPerFrame` is 83.3 for walk). Idle-look appears after 4 s and sit after 10 s of no input in walk mode.
 
@@ -3096,9 +3100,9 @@ this.seeds = this.add.particles(0, 0, 'seed', {
 Run: `npm test && npm run typecheck && npm run check:tokens` — Expected: PASS.
 Run the Verification Recipe with `shots/phase-6-morning.png`, then:
 ```bash
-node "...browser.mjs" http://localhost:5173/ --wait canvas --eval "window.__dbg.setPhase('dusk'), 'ok'" --screenshot shots/phase-6-dusk.png
+DBG_EXPR="window.__dbg.setPhase('dusk'), 'ok'" node "...browser.mjs" http://localhost:5180/ --script ./qa/dbg.mjs
 ```
-Note: with `--eval` the page is fresh each call, so use a `--script` that calls `setPhase('dusk')`, waits 3000 ms, then screenshots. Expected: dusk screenshot noticeably warmer/violet in the far layer; grass tufts visible near the start; no console errors; fps still ≥ 55 in the summary.
+Note: the page is fresh on every call, so for the screenshot use a `--script` that calls `setPhase('dusk')` through `page.evaluate(..., undefined, false)`, waits 3000 ms, then screenshots. Expected: dusk screenshot noticeably warmer/violet in the far layer; grass tufts visible near the start; no console errors; fps still ≥ 55 in the summary.
 
 **Design checkpoint (ui-ux-pro-max priority 7, GDD 8.2):** grade transition takes 2.5 s, nothing snaps; shadows are violet, not grey; wind is one value shared by grass, clouds, seeds, and skate physics (verify by tuning `windBase` to -0.8 in `__dbg` and watching everything reverse).
 
@@ -4240,19 +4244,19 @@ Run the Verification Recipe with `shots/phase-8.png`. Then `qa/phase8.mjs`:
 ```js
 export default async function run(page, ui) {
   await page.waitForSelector('canvas');
-  await page.evaluate(() => window.__dbg.reset());
+  await page.evaluate(() => window.__dbg.reset(), undefined, false);
   await page.keyboard.down('ArrowRight');
   await page.waitForTimeout(6500);                       // walk to Miki at x=1000
   await page.keyboard.up('ArrowRight');
-  const near = await page.evaluate(() => window.__dbg.player());
+  const near = await page.evaluate(() => window.__dbg.player(), undefined, false);
   const prompt = await ui.snapshot({ full: true });
   await page.keyboard.press('KeyE');
   await page.waitForTimeout(1500);
   const talk = await ui.snapshot({ full: true });
   await page.keyboard.press('KeyE');
   await page.waitForTimeout(400);
-  await page.evaluate(() => window.__dbg.setFlag('coins:given'));
-  const flags = await page.evaluate(() => window.__dbg.flags());
+  await page.evaluate(() => window.__dbg.setFlag('coins:given'), undefined, false);
+  const flags = await page.evaluate(() => window.__dbg.flags(), undefined, false);
   const saved = await page.evaluate(() => JSON.parse(localStorage.getItem('downhill-summer:save') || 'null'));
   return { nearX: near.x, prompt: prompt.includes('Talk to Miki'), talk: talk.includes('orange cat'), flags, coins: saved && saved.coins };
 }
@@ -4614,7 +4618,7 @@ Run the Verification Recipe with `shots/phase-9.png`. Then `qa/phase9.mjs`:
 ```js
 export default async function run(page, ui) {
   await page.waitForSelector('canvas');
-  await page.evaluate(() => window.__dbg.reset());
+  await page.evaluate(() => window.__dbg.reset(), undefined, false);
   await page.waitForTimeout(1200);
   const intro = await ui.snapshot({ full: true });         // bus driver line visible
   await page.keyboard.press('KeyE'); await page.waitForTimeout(900);
@@ -4624,7 +4628,7 @@ export default async function run(page, ui) {
   await page.waitForTimeout(800);
   const postcard = await ui.snapshot({ full: true });
   await page.keyboard.press('Escape'); await page.waitForTimeout(300);
-  const save = await page.evaluate(() => { window.__dbg.scene(); return JSON.parse(localStorage.getItem('downhill-summer:save')); });
+  const save = await page.evaluate(() => { window.__dbg.scene(); return JSON.parse(localStorage.getItem('downhill-summer:save')); }, undefined, false);
   return { intro: intro.includes('Last stop'), hintWalk: hintWalk.includes('Hold to walk'), postcard: postcard.includes('New postcard'), postcards: save && save.postcards.length };
 }
 ```
@@ -4778,7 +4782,7 @@ Run the Verification Recipe. `qa/phase10.mjs`:
 ```js
 export default async function run(page, ui) {
   await page.waitForSelector('canvas');
-  await page.evaluate(() => { window.__dbg.reset(); window.__dbg.travel('street', 'fromStairs'); });
+  await page.evaluate(() => { window.__dbg.reset(); window.__dbg.travel('street', 'fromStairs'); }, undefined, false);
   await page.waitForTimeout(1200);
   await page.screenshot({ path: 'shots/phase-10-street.png' });
   await page.keyboard.down('ArrowRight'); await page.waitForTimeout(5600); await page.keyboard.up('ArrowRight'); // to Fumi at ~900
@@ -4790,7 +4794,7 @@ export default async function run(page, ui) {
   if (ofCourse) await ui.click(`@${ofCourse}`);
   await page.waitForTimeout(1600);
   await page.keyboard.press('KeyE'); await page.waitForTimeout(500);
-  const afterFumi = await page.evaluate(() => ({ flags: window.__dbg.flags(), summary: window.__dbg.summary() }));
+  const afterFumi = await page.evaluate(() => ({ flags: window.__dbg.flags(), summary: window.__dbg.summary() }), undefined, false);
   await page.keyboard.down('ArrowRight'); await page.waitForTimeout(1200); await page.keyboard.up('ArrowRight'); // to vending ~1060
   await page.keyboard.press('KeyE'); await page.waitForTimeout(1200);
   const vend = await ui.snapshot({ full: true });
@@ -5107,7 +5111,7 @@ Run the Verification Recipe. `qa/phase11.mjs` uses debug hooks to jump the story
 ```js
 export default async function run(page, ui) {
   await page.waitForSelector('canvas');
-  await page.evaluate(() => { window.__dbg.reset(); ['errand:bento:accepted', 'bento:collected', 'coins:given'].forEach((f) => window.__dbg.setFlag(f)); window.__dbg.travel('hill', 'start'); });
+  await page.evaluate(() => { window.__dbg.reset(); ['errand:bento:accepted', 'bento:collected', 'coins:given'].forEach((f) => window.__dbg.setFlag(f)); window.__dbg.travel('hill', 'start'); }, undefined, false);
   await page.waitForTimeout(1200);
   await page.keyboard.down('ArrowRight'); await page.waitForTimeout(2600); await page.keyboard.up('ArrowRight'); // ~3300, Kaji
   await page.keyboard.press('KeyE'); await page.waitForTimeout(1600);
@@ -5115,11 +5119,11 @@ export default async function run(page, ui) {
   const food = snap.match(/@(e\d+) button "Food. A bento."/)?.[1];
   if (food) await ui.click(`@${food}`);
   await page.waitForTimeout(1500); await page.keyboard.press('KeyE'); await page.waitForTimeout(300);
-  const dusk = await page.evaluate(() => window.__dbg.summary().phase);
+  const dusk = await page.evaluate(() => window.__dbg.summary().phase, undefined, false);
   await page.waitForTimeout(5600);                       // stand still on the bench zone
-  const spirit = await page.evaluate(() => window.__dbg.flags()['spirit:kazebo:day1']);
+  const spirit = await page.evaluate(() => window.__dbg.flags()['spirit:kazebo:day1'], undefined, false);
   await page.screenshot({ path: 'shots/phase-11-spirit.png' });
-  await page.evaluate(() => window.__dbg.travel('street', 'fromHill'));
+  await page.evaluate(() => window.__dbg.travel('street', 'fromHill'), undefined, false);
   await page.waitForTimeout(1200);
   await page.keyboard.down('ArrowLeft'); await page.waitForTimeout(14500); await page.keyboard.up('ArrowLeft'); // 2900 -> ~900 at 140 px/s
   await page.keyboard.press('KeyE'); await page.waitForTimeout(1400);
@@ -5405,7 +5409,7 @@ create(): void {
 - [ ] **Step 5: Verify**
 
 Run: `npm test && npm run typecheck && npm run check:tokens` — Expected: PASS.
-Run the Verification Recipe; headless Chrome runs WebAudio silently, so assert structure: `--eval "(() => { const a = window.__dbg.audio(); return a; })()"` after adding `audio: () => ({ unlocked: Boolean((ambience as unknown as { ctx?: AudioContext }).ctx) })` to `__dbg`, driven by `qa/phase12.mjs` that presses a key first, then reads `unlocked: true`. Then listen yourself: `npm run dev`, press a key, walk into grass on the hill (wheels change pitch when you ride from concrete onto grass on the street/hill boundary), stand on the stairs (sea layer), stand on the street at afternoon (cicadas). No console errors, no "AudioContext was not allowed to start" warning after the first key.
+Run the Verification Recipe; headless Chrome runs WebAudio silently, so assert structure: `DBG_EXPR="window.__dbg.audio()"` with `--script ./qa/dbg.mjs` after adding `audio: () => ({ unlocked: Boolean((ambience as unknown as { ctx?: AudioContext }).ctx) })` to `__dbg`, driven by `qa/phase12.mjs` that presses a key first, then reads `unlocked: true`. Then listen yourself: `npm run dev`, press a key, walk into grass on the hill (wheels change pitch when you ride from concrete onto grass on the street/hill boundary), stand on the stairs (sea layer), stand on the street at afternoon (cicadas). No console errors, no "AudioContext was not allowed to start" warning after the first key.
 
 - [ ] **Step 6: Commit**
 
@@ -5602,7 +5606,7 @@ export default defineConfig({
     }),
   ],
   define: { __APP_VERSION__: JSON.stringify(process.env.npm_package_version ?? '0.0.0') },
-  server: { port: 5173, strictPort: true },
+  server: { port: 5180, strictPort: true },
   build: { target: 'es2022', chunkSizeWarningLimit: 1600 },
 });
 ```
@@ -5623,7 +5627,7 @@ Run: `npm test && npm run typecheck && npm run check:tokens && npm run build` �
 ```js
 export default async function run(page, ui) {
   await page.setViewportSize({ width: 844, height: 390 });
-  await page.goto('http://localhost:5173/?touch=1');
+  await page.goto('http://localhost:5180/?touch=1');
   await page.waitForSelector('.touch');
   const snap = await ui.snapshot();
   const sizes = await page.evaluate(() => [...document.querySelectorAll('.tkey')].map((b) => { const r = b.getBoundingClientRect(); return [Math.round(r.width), Math.round(r.height)]; }));
@@ -5635,11 +5639,11 @@ export default async function run(page, ui) {
   await page.mouse.down();
   await page.waitForTimeout(1500);
   await page.mouse.up();
-  const player = await page.evaluate(() => window.__dbg.player());
+  const player = await page.evaluate(() => window.__dbg.player(), undefined, false);
   return { buttons: snap.split('\n').filter((l) => l.includes('button')).length, sizes, noScroll, movedRight: player.x > 150, hasRight: Boolean(right) };
 }
 ```
-Run with `node "...browser.mjs" http://localhost:5173/ --script ./qa/phase13-mobile.mjs`. Expected: 6 buttons, every size `[64, 64]`, `noScroll: true`, `movedRight: true`. Then a real phone: `npm run dev -- --host`, open `http://<your LAN IP>:5173/?debug` on the phone in landscape, read the fps in the debug text after 20 s of skating on the stairs (target ≥ 55 on a 2023 mid-range Android; if lower, halve `GrassField` density in the stage defs and note it). Test "Add to Home Screen" from `npm run preview` served over the LAN (PWA install needs HTTPS or localhost; on the phone use the Vercel preview URL from Phase 14 if install is required).
+Run with `node "...browser.mjs" http://localhost:5180/ --script ./qa/phase13-mobile.mjs`. Expected: 6 buttons, every size `[64, 64]`, `noScroll: true`, `movedRight: true`. Then a real phone: `npm run dev -- --host`, open `http://<your LAN IP>:5180/?debug` on the phone in landscape, read the fps in the debug text after 20 s of skating on the stairs (target ≥ 55 on a 2023 mid-range Android; if lower, halve `GrassField` density in the stage defs and note it). Test "Add to Home Screen" from `npm run preview` served over the LAN (PWA install needs HTTPS or localhost; on the phone use the Vercel preview URL from Phase 14 if install is required).
 
 - [ ] **Step 5: Commit**
 

@@ -1,0 +1,5 @@
+html, body { margin: 0; height: 100%; overflow: hidden; background: #f4ecd8; }
+#game-root { position: fixed; inset: 0; }
+#game-root canvas { display: block; }
+#ui-root { position: fixed; pointer-events: none; overflow: hidden; }
+#ui-root > * { pointer-events: auto; }

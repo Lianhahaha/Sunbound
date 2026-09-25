@@ -1,0 +1,40 @@
+{
+  "name": "downhill-summer",
+  "version": "0.1.0",
+  "description": "A quiet summer skateboarding game. Web alpha.",
+  "directories": {
+    "doc": "docs"
+  },
+  "scripts": {
+    "test": "vitest run",
+    "dev": "vite",
+    "build": "tsc --noEmit && vite build",
+    "preview": "vite preview --port 4173",
+    "test:watch": "vitest",
+    "typecheck": "tsc --noEmit"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/Lianhahaha/Sunbound.git"
+  },
+  "type": "module",
+  "bugs": {
+    "url": "https://github.com/Lianhahaha/Sunbound/issues"
+  },
+  "homepage": "https://github.com/Lianhahaha/Sunbound#readme",
+  "private": "true",
+  "dependencies": {
+    "phaser": "3.90.0",
+    "react": "19.3.0",
+    "react-dom": "19.3.0"
+  },
+  "devDependencies": {
+    "@types/node": "24.13.6",
+    "@types/react": "19.3.0",
+    "@types/react-dom": "19.3.0",
+    "@vitejs/plugin-react": "6.1.1",
+    "typescript": "5.9.3",
+    "vite": "8.3.1",
+    "vitest": "5.0.1"
+  }
+}
