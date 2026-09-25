@@ -1458,6 +1458,8 @@ git push origin main
 
 ## Phase 3: Walk and Run with Stamina (1.5 h)
 
+> **Executed 2026-09-25.** Deviations, already folded into this and later phases: the player actor exposes its simulation state as `sim`, not `state` (Phaser game objects already own a `state: number | string` field, so `state: PlayerState` fails to compile); the gamepad R1 button is analog in Phaser's types, so interact reads `pad.R1 > 0.5`. `qa/phase3.mjs` also saves `shots/phase-3.png`. Result: Shift + Right for 3 s ran Sora to x 782 with stamina 46 and no tiredness.
+
 **Deliverable:** The probe is replaced by `PlayerActor` (a placeholder rectangle for now). Sora walks with arrows/A-D, runs with Shift, slows on uphill segments, drains stamina when running or climbing, becomes tired at 0 and recovers at 30. Input is unified across keyboard, gamepad, and (later) touch. Debug HUD shows mode, speed, stamina.
 
 **Files:**
@@ -1467,7 +1469,7 @@ git push origin main
 
 **Interfaces:**
 - Consumes: `Terrain`, `heightAt`, `slopeAt`, `terrainBounds`, `PlayerState`, `PlayerInput`, `NO_INPUT`, `clamp`, `Env`.
-- Produces: `DEFAULT_WALK: WalkParams`, `stepWalk(state, input, dt, terrain, params?): PlayerState`; `createPlayer(x, terrain, mode?): PlayerState`, `stepPlayer(state, input, dt, terrain, env): PlayerState`; `class InputState { blocked: boolean; touch: TouchState; frame(): PlayerInput }`; `class PlayerActor extends Phaser.GameObjects.Container { state: PlayerState; step(input, dt, env): void }`.
+- Produces: `DEFAULT_WALK: WalkParams`, `stepWalk(state, input, dt, terrain, params?): PlayerState`; `createPlayer(x, terrain, mode?): PlayerState`, `stepPlayer(state, input, dt, terrain, env): PlayerState`; `class InputState { blocked: boolean; touch: TouchState; frame(): PlayerInput }`; `class PlayerActor extends Phaser.GameObjects.Container { sim: PlayerState; step(input, dt, env): void }`.
 
 - [ ] **Step 1: Write the failing walk tests**
 
@@ -1694,7 +1696,7 @@ export class InputState {
     const tuck = k.down.isDown || k.s.isDown || t.tuck || (pad?.B ?? false);
     const jumpDown = k.space.isDown || k.up.isDown || k.w.isDown || t.jump || (pad?.A ?? false);
     const toggleDown = k.q.isDown || t.toggle || (pad?.Y ?? false);
-    const interactDown = k.e.isDown || k.enter.isDown || t.interact || (pad?.R1 ?? false);
+    const interactDown = k.e.isDown || k.enter.isDown || t.interact || (pad !== undefined && pad.R1 > 0.5);
     const out: PlayerInput = {
       left, right, run, tuck,
       jumpPressed: jumpDown && !this.prev.jump,
@@ -1717,23 +1719,23 @@ import type { Env, PlayerInput, PlayerState } from '../core/types';
 import { P } from '../palette';
 
 export class PlayerActor extends Phaser.GameObjects.Container {
-  state: PlayerState;
+  sim: PlayerState;
   private figure: Phaser.GameObjects.Rectangle;
 
   constructor(scene: Phaser.Scene, private terrain: Terrain, x: number) {
     super(scene, x, 0);
-    this.state = createPlayer(x, terrain);
+    this.sim = createPlayer(x, terrain);
     this.figure = scene.add.rectangle(0, -32, 28, 64, P['shirt-500']);
     this.add(this.figure);
-    this.setPosition(this.state.x, this.state.y);
+    this.setPosition(this.sim.x, this.sim.y);
     this.setDepth(1);
     scene.add.existing(this);
   }
 
   step(input: PlayerInput, dt: number, env: Env): void {
-    this.state = stepPlayer(this.state, input, dt, this.terrain, env);
-    this.setPosition(this.state.x, this.state.y);
-    this.figure.setScale(this.state.facing, 1);
+    this.sim = stepPlayer(this.sim, input, dt, this.terrain, env);
+    this.setPosition(this.sim.x, this.sim.y);
+    this.figure.setScale(this.sim.facing, 1);
   }
 }
 ```
@@ -1741,20 +1743,20 @@ export class PlayerActor extends Phaser.GameObjects.Container {
 `src/game/scenes/StageScene.ts` changes:
 - Remove `probe`, `probeGfx`, `cursors` and their code.
 - Add fields `player!: PlayerActor; input!: InputState; env: Env = { wind: 0 };` and `private spawnX = 0;` set in `init`.
-- In `create()`, after `drawGround(...)`: `this.input = new InputState(this); this.player = new PlayerActor(this, this.terrain, this.spawnX);` then `this.cam = snapCamera({ x: this.player.state.x, y: this.player.state.y, vx: 0, facing: 1 });`.
+- In `create()`, after `drawGround(...)`: `this.input = new InputState(this); this.player = new PlayerActor(this, this.terrain, this.spawnX);` then `this.cam = snapCamera({ x: this.player.sim.x, y: this.player.sim.y, vx: 0, facing: 1 });`.
 - In `update()`:
 ```ts
 const dt = Math.min(deltaMs / 1000, 1 / 30);
 const frame = this.input.frame();
 this.player.step(frame, dt, this.env);
-const s = this.player.state;
+const s = this.player.sim;
 this.cam = stepCamera(this.cam, { x: s.x, y: s.y, vx: s.vx, facing: s.facing }, dt, DEFAULT_CAM);
 this.applyCamera();
 this.debugText.setText(
   `${this.def.name}   ${s.mode}  x ${s.x.toFixed(0)}  spd ${s.speed.toFixed(0)}  sta ${s.stamina.toFixed(0)}${s.tired ? ' tired' : ''}   fps ${this.game.loop.actualFps.toFixed(0)}`,
 );
 ```
-- `__dbg.summary()` returns `{ stage, ...pick(s, ['mode','x','y','speed','stamina','tired','grounded']), fps }`; add `player: () => this.player.state`.
+- `__dbg.summary()` returns `{ stage, ...pick(s, ['mode','x','y','speed','stamina','tired','grounded']), fps }`; add `player: () => this.player.sim`.
 
 Note: the Phaser scene property `this.input` is Phaser's InputPlugin. Name the field `this.inputs` to avoid shadowing it: `inputs!: InputState;` and `this.inputs = new InputState(this)`.
 
@@ -2120,7 +2122,7 @@ import { ensureDust } from '../art/PlaceholderArt';
 import { P } from '../palette';
 
 export class PlayerActor extends Phaser.GameObjects.Container {
-  state: PlayerState;
+  sim: PlayerState;
   params: Required<PlayerParams> = { skate: { ...DEFAULT_SKATE }, walk: { ...DEFAULT_WALK } };
   private figure: Phaser.GameObjects.Rectangle;
   private dust: Phaser.GameObjects.Particles.ParticleEmitter;
@@ -2129,7 +2131,7 @@ export class PlayerActor extends Phaser.GameObjects.Container {
   constructor(scene: Phaser.Scene, private terrain: Terrain, x: number) {
     super(scene, x, 0);
     ensureDust(scene);
-    this.state = createPlayer(x, terrain);
+    this.sim = createPlayer(x, terrain);
     this.figure = scene.add.rectangle(0, -32, 28, 64, P['shirt-500']);
     this.add(this.figure);
     this.dust = scene.add
@@ -2139,14 +2141,14 @@ export class PlayerActor extends Phaser.GameObjects.Container {
         lifespan: { min: 300, max: 550 }, gravityY: -20, tint: P['sand-200'], emitting: false,
       })
       .setDepth(0);
-    this.setPosition(this.state.x, this.state.y);
+    this.setPosition(this.sim.x, this.sim.y);
     this.setDepth(1);
     scene.add.existing(this);
   }
 
   step(input: PlayerInput, dt: number, env: Env): void {
-    const prev = this.state;
-    const s = (this.state = stepPlayer(prev, input, dt, this.terrain, env, this.params));
+    const prev = this.sim;
+    const s = (this.sim = stepPlayer(prev, input, dt, this.terrain, env, this.params));
     this.setPosition(s.x, s.y);
     const targetAngle = s.mode === 'skate' ? s.angle : 0;
     this.visualAngle = expLerp(this.visualAngle, targetAngle, 10, dt);
@@ -2587,7 +2589,7 @@ import { ensureSoraTextures, registerSoraAnims } from '../art/SoraSheet';
 import { P } from '../palette';
 
 export class PlayerActor extends Phaser.GameObjects.Container {
-  state: PlayerState;
+  sim: PlayerState;
   params: Required<PlayerParams> = { skate: { ...DEFAULT_SKATE }, walk: { ...DEFAULT_WALK } };
   currentAnim: AnimKey | null = null;
   private sprite: Phaser.GameObjects.Sprite;
@@ -2605,7 +2607,7 @@ export class PlayerActor extends Phaser.GameObjects.Container {
     ensureSoraTextures(scene);
     registerSoraAnims(scene);
     ensureDust(scene);
-    this.state = createPlayer(x, terrain);
+    this.sim = createPlayer(x, terrain);
     this.pack = scene.add.image(0, 0, 'sora-pack');
     this.sprite = scene.add.sprite(0, 0, 'sora', 'idle-0').setOrigin(0.5, 1);
     this.hair = scene.add.image(0, 0, 'sora-hair').setOrigin(0.5, 1);
@@ -2617,14 +2619,14 @@ export class PlayerActor extends Phaser.GameObjects.Container {
         lifespan: { min: 300, max: 550 }, gravityY: -20, tint: P['sand-200'], emitting: false,
       })
       .setDepth(0);
-    this.setPosition(this.state.x, this.state.y);
+    this.setPosition(this.sim.x, this.sim.y);
     this.setDepth(1);
     scene.add.existing(this);
   }
 
   step(input: PlayerInput, dt: number, env: Env): void {
-    const prev = this.state;
-    const s = (this.state = stepPlayer(prev, input, dt, this.terrain, env, this.params));
+    const prev = this.sim;
+    const s = (this.sim = stepPlayer(prev, input, dt, this.terrain, env, this.params));
     this.setPosition(s.x, s.y);
 
     const targetAngle = s.mode === 'skate' && s.grounded ? s.angle : 0;
@@ -4764,7 +4766,7 @@ The content test's "last entry unconditional" rule still holds. The vending scri
 
 - [ ] **Step 4: Shop interaction and stamina restore**
 
-`PlayerActor.restoreStamina()`: `this.state = { ...this.state, stamina: 100, tired: false };`
+`PlayerActor.restoreStamina()`: `this.sim = { ...this.sim, stamina: 100, tired: false };`
 
 `StageScene.interact` add:
 ```ts
@@ -4773,7 +4775,7 @@ case 'shop': {
   if (canBuy) {
     gameState.addCoins(-1);
     this.player.restoreStamina();
-    this.sparkle.explode(14, this.player.state.x, this.player.state.y - 40);
+    this.sparkle.explode(14, this.player.sim.x, this.player.sim.y - 40);
   }
   void this.dialogue.open(SCRIPTS.vending, canBuy ? 'buy' : 'empty', gameState.flags).then((f) => gameState.mergeFlags(f));
   break;

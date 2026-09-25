@@ -1,12 +1,15 @@
 import Phaser from 'phaser';
 import { GAME_HEIGHT, GAME_WIDTH } from '../../shared/constants';
 import { DEFAULT_CAM, snapCamera, stepCamera, type CamState } from '../core/camera';
-import { createTerrain, heightAt, terrainBounds, type Terrain } from '../core/terrain';
+import { createTerrain, terrainBounds, type Terrain } from '../core/terrain';
+import type { Env } from '../core/types';
 import { P, hexString } from '../palette';
 import { STAGES } from '../stages';
 import type { LayerDef, StageDef } from '../stages/types';
 import { LAYER_H, ensureStagePlaceholders } from '../art/PlaceholderArt';
 import { drawGround } from '../art/Ground';
+import { InputState } from '../input/InputState';
+import { PlayerActor } from '../objects/PlayerActor';
 
 export interface StageData { stage: string; spawn?: string }
 
@@ -16,11 +19,13 @@ export class StageScene extends Phaser.Scene {
   def!: StageDef;
   terrain!: Terrain;
   cam!: CamState;
+  player!: PlayerActor;
+  /** Named `inputs` so it does not shadow Phaser's own `this.input` plugin. */
+  inputs!: InputState;
+  env: Env = { wind: 0 };
+  private spawnX = 0;
   private layers: { def: LayerDef; obj: Phaser.GameObjects.TileSprite }[] = [];
   private baseScrollY = 0;
-  private probe = { x: 0, y: 0, vx: 0, facing: 1 as 1 | -1 };
-  private probeGfx!: Phaser.GameObjects.Graphics;
-  private cursors!: Phaser.Types.Input.Keyboard.CursorKeys;
   private debugText!: Phaser.GameObjects.Text;
 
   constructor() {
@@ -32,8 +37,7 @@ export class StageScene extends Phaser.Scene {
     if (!def) throw new Error(`unknown stage ${data.stage}`);
     this.def = def;
     this.terrain = createTerrain(def.terrain);
-    const spawnX = def.spawns[data.spawn ?? 'start'] ?? def.spawns.start;
-    this.probe = { x: spawnX, y: heightAt(this.terrain, spawnX), vx: 0, facing: 1 };
+    this.spawnX = def.spawns[data.spawn ?? 'start'] ?? def.spawns.start;
   }
 
   create(): void {
@@ -48,11 +52,11 @@ export class StageScene extends Phaser.Scene {
     }));
     const b = terrainBounds(this.terrain);
     drawGround(this.add.graphics().setDepth(-2), this.terrain, b.maxY + 400);
-    this.probeGfx = this.add.graphics().setDepth(1);
-    this.cursors = this.input.keyboard!.createCursorKeys();
+    this.inputs = new InputState(this);
+    this.player = new PlayerActor(this, this.terrain, this.spawnX);
 
     this.cameras.main.setBounds(0, b.minY - 520, this.def.width, b.maxY + 260 - (b.minY - 520));
-    this.cam = snapCamera(this.probe);
+    this.cam = snapCamera({ x: this.player.sim.x, y: this.player.sim.y, vx: 0, facing: 1 });
     this.applyCamera();
     this.baseScrollY = this.cameras.main.scrollY;
 
@@ -69,12 +73,21 @@ export class StageScene extends Phaser.Scene {
 
     if (import.meta.env.DEV) {
       (window as unknown as { __dbg: unknown }).__dbg = {
-        summary: () => ({
-          stage: this.def.id,
-          x: Math.round(this.probe.x),
-          y: Math.round(this.probe.y),
-          fps: Math.round(this.game.loop.actualFps),
-        }),
+        summary: () => {
+          const s = this.player.sim;
+          return {
+            stage: this.def.id,
+            mode: s.mode,
+            x: Math.round(s.x),
+            y: Math.round(s.y),
+            speed: Math.round(s.speed),
+            stamina: Math.round(s.stamina),
+            tired: s.tired,
+            grounded: s.grounded,
+            fps: Math.round(this.game.loop.actualFps),
+          };
+        },
+        player: () => this.player.sim,
         scene: () => this,
       };
     }
@@ -82,18 +95,13 @@ export class StageScene extends Phaser.Scene {
 
   override update(_time: number, deltaMs: number): void {
     const dt = Math.min(deltaMs / 1000, 1 / 30);
-    const dir = (this.cursors.right.isDown ? 1 : 0) - (this.cursors.left.isDown ? 1 : 0);
-    this.probe.vx = dir * 300;
-    if (dir !== 0) this.probe.facing = dir as 1 | -1;
-    const b = terrainBounds(this.terrain);
-    this.probe.x = Phaser.Math.Clamp(this.probe.x + this.probe.vx * dt, b.minX, b.maxX);
-    this.probe.y = heightAt(this.terrain, this.probe.x);
-    this.probeGfx.clear().fillStyle(P['vend-500'], 1).fillCircle(this.probe.x, this.probe.y - 16, 16);
-
-    this.cam = stepCamera(this.cam, this.probe, dt, DEFAULT_CAM);
+    const frame = this.inputs.frame();
+    this.player.step(frame, dt, this.env);
+    const s = this.player.sim;
+    this.cam = stepCamera(this.cam, { x: s.x, y: s.y, vx: s.vx, facing: s.facing }, dt, DEFAULT_CAM);
     this.applyCamera();
     this.debugText.setText(
-      `${this.def.name}   x ${this.probe.x.toFixed(0)}  y ${this.probe.y.toFixed(0)}   fps ${this.game.loop.actualFps.toFixed(0)}`,
+      `${this.def.name}   ${s.mode}  x ${s.x.toFixed(0)}  spd ${s.speed.toFixed(0)}  sta ${s.stamina.toFixed(0)}${s.tired ? ' tired' : ''}   fps ${this.game.loop.actualFps.toFixed(0)}`,
     );
   }
 
